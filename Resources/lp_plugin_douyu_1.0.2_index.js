@@ -1,6 +1,6 @@
 const _douyu_playbackUserAgent = "libmpv";
 
-function _lp_decodePercent(s) {
+function _douyu_decodePercent(s) {
   try {
     return decodeURIComponent(s);
   } catch (e) {
@@ -18,7 +18,7 @@ function _douyu_throw(code, message, context) {
   throw new Error(`LP_PLUGIN_ERROR:${JSON.stringify({ code: String(code || "UNKNOWN"), message: String(message || ""), context: context || {} })}`);
 }
 
-function _lp_parseQuery(qs) {
+function _douyu_parseQuery(qs) {
   const out = {};
   if (!qs) return out;
   const parts = String(qs).split("&");
@@ -27,31 +27,31 @@ function _lp_parseQuery(qs) {
     const idx = p.indexOf("=");
     const k = idx >= 0 ? p.slice(0, idx) : p;
     const v = idx >= 0 ? p.slice(idx + 1) : "";
-    out[k] = _lp_decodePercent(v);
+    out[k] = _douyu_decodePercent(v);
   }
   return out;
 }
 
-function _lp_isNumericId(roomId) {
+function _douyu_isNumericId(roomId) {
   const s = String(roomId || "").trim();
   if (!/^\d+$/.test(s)) return false;
   const n = parseInt(s, 10);
   return Number.isFinite(n) && n > 0;
 }
 
-function _lp_firstMatch(text, re) {
+function _douyu_firstMatch(text, re) {
   const m = String(text || "").match(re);
   if (!m || !m[1]) return "";
   return String(m[1]);
 }
 
-function _lp_firstURL(text) {
+function _douyu_firstURL(text) {
   const m = String(text || "").match(/https?:\/\/[^\s|]+/);
   if (!m) return "";
   return String(m[0]).replace(/[),，。】]+$/g, "");
 }
 
-function _lp_randomString(length) {
+function _douyu_randomString(length) {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let out = "";
   for (let i = 0; i < length; i += 1) {
@@ -224,7 +224,7 @@ async function _douyu_getSign(roomId) {
     _douyu_throw("PARSE", "execute sign function failed", { roomId: String(roomId || "") });
   }
 
-  const params = _lp_parseQuery(paramsString);
+  const params = _douyu_parseQuery(paramsString);
   return params;
 }
 
@@ -288,7 +288,7 @@ async function _douyu_getPlayback(roomId, rate, cdn) {
 }
 
 async function _douyu_search(keyword, page) {
-  const did = _lp_randomString(32);
+  const did = _douyu_randomString(32);
   const qs = [
     `kw=${encodeURIComponent(String(keyword))}`,
     `page=${encodeURIComponent(String(page))}`,
@@ -327,17 +327,17 @@ async function _douyu_resolveShare(shareCode) {
   const input = String(shareCode || "").trim();
   if (!input) _douyu_throw("INVALID_ARGS", "shareCode is empty", { field: "shareCode" });
 
-  if (_lp_isNumericId(input)) return input;
+  if (_douyu_isNumericId(input)) return input;
 
   let roomId = "";
   if (input.includes("douyu.com")) {
-    roomId = _lp_firstMatch(input, /douyu\.com\/(\d+)/);
-    if (_lp_isNumericId(roomId)) return roomId;
-    roomId = _lp_firstMatch(input, /rid=(\d+)/);
-    if (_lp_isNumericId(roomId)) return roomId;
+    roomId = _douyu_firstMatch(input, /douyu\.com\/(\d+)/);
+    if (_douyu_isNumericId(roomId)) return roomId;
+    roomId = _douyu_firstMatch(input, /rid=(\d+)/);
+    if (_douyu_isNumericId(roomId)) return roomId;
   }
 
-  let candidateUrl = _lp_firstURL(input);
+  let candidateUrl = _douyu_firstURL(input);
   if (!candidateUrl) {
     if (input.startsWith("http")) {
       candidateUrl = input;
@@ -353,8 +353,8 @@ async function _douyu_resolveShare(shareCode) {
       timeout: 20
     });
 
-    roomId = _lp_firstMatch(resp.url || "", /(?:douyu\.com\/|rid=)(\d+)/);
-    if (_lp_isNumericId(roomId)) return roomId;
+    roomId = _douyu_firstMatch(resp.url || "", /(?:douyu\.com\/|rid=)(\d+)/);
+    if (_douyu_isNumericId(roomId)) return roomId;
 
     const html = String(resp.bodyText || "");
     const patterns = [
@@ -364,8 +364,8 @@ async function _douyu_resolveShare(shareCode) {
     ];
 
     for (const p of patterns) {
-      roomId = _lp_firstMatch(html, p);
-      if (_lp_isNumericId(roomId)) return roomId;
+      roomId = _douyu_firstMatch(html, p);
+      if (_douyu_isNumericId(roomId)) return roomId;
     }
   }
 
